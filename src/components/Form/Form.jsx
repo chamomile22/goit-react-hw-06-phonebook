@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import PropTypes from 'prop-types';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   ContactsForm,
   Label,
@@ -7,10 +7,16 @@ import {
   InputField,
   BtnSubmit,
 } from './Form.styled';
+import { nanoid } from 'nanoid';
+import { addContact } from 'redux/contactsSlice';
+import { selectContacts } from 'redux/selectors';
+import { toast } from 'react-toastify';
 
-export const Form = ({ onSubmit }) => {
+export const Form = () => {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
+  const contacts = useSelector(selectContacts);
+  const dispatch = useDispatch();
 
   const handleChange = event => {
     const { name, value } = event.target;
@@ -28,7 +34,26 @@ export const Form = ({ onSubmit }) => {
 
   const handleSubmit = event => {
     event.preventDefault();
-    onSubmit({ name, number });
+    if (!name.trim() || !number.trim()) {
+      toast.info('Please enter contact name and number');
+      return;
+    }
+
+    const isExist = contacts.find(
+      contact => contact.name.toLowerCase() === name.toLowerCase()
+    );
+    if (isExist) {
+      toast.info('Contact with this name already exist!');
+      reset();
+      return;
+    }
+
+    const contact = {
+      id: nanoid(),
+      name,
+      number,
+    };
+    dispatch(addContact(contact));
 
     reset();
   };
@@ -67,8 +92,4 @@ export const Form = ({ onSubmit }) => {
       <BtnSubmit type="submit">Add contact</BtnSubmit>
     </ContactsForm>
   );
-};
-
-Form.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
 };
